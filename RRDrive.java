@@ -14,81 +14,84 @@ import java.util.Locale;
 
 // SELECT TELEOP / AUTONOMOUS - FOR NAME ON DRIVER PHONE SELECTION
 
-@TeleOp(name = "RRDriveFinal5", group = "Competition")
+@TeleOp(name = "RRDrive", group = "Competition")
 
 public class RRDrive extends OpMode {
 
-// SET DESCRIPTION FOR EACH MOTOR ON DRIVE TRAIN
-
-    private DcMotor LeftDrive = null;
-    private DcMotor RightDrive = null;
-
-    private DcMotor BrushMotor = null;
-    private DcMotor ArmMotor = null;
-
-// SET DESCRIPTION FOR SERVO
-
-    private Servo IntakeServo = null;
-
-// SET DESCRIPTION FOR DISTANCE SENSOR
-
-    private DistanceSensor SensorRange;
-
-// SET DESCRIPTION FOR COLOR SENSOR
-
-    private ColorSensor ColorSensor;
-
-// PROGRAM START POINT
-
-    @Override
-    public void init () {
-
-// HARDWARE MAPPING IS USED TO MAP LABELS TO EACH MOTOR AND SERVO
-
-        LeftDrive = hardwareMap.get(DcMotor.class,"LeftMotorDrive");
-        RightDrive = hardwareMap.get(DcMotor.class,"RightMotorDrive");
-        BrushMotor = hardwareMap.get(DcMotor.class, "BrushMotor");
-        ArmMotor = hardwareMap.get(DcMotor.class, "ArmMotor");
-
-
-// SERVO
-
-        IntakeServo = hardwareMap.servo.get("IntakeServo");
-
-// HARDWARE MAP FOR DISTANCE SENSOR
-
-        SensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
-
-// HARDWARE MAP FOR COLOR SENSOR
-
-        ColorSensor = hardwareMap.get(ColorSensor.class, "sensor_color");
-
-// SET DIRECTION OF MOTOR DRIVE / SERVO
-
-        LeftDrive.setDirection(DcMotor.Direction.FORWARD);
-        RightDrive.setDirection(DcMotor.Direction.REVERSE);
-
-        BrushMotor.setDirection(DcMotor.Direction.FORWARD);
-
-        ArmMotor.setDirection(DcMotor.Direction.REVERSE);
-
-        IntakeServo.setDirection(Servo.Direction.FORWARD);
-
-// SETUP TELEMETRY - SENDING DATA TO DRIVER PHONE
-
-        telemetry.addData("Status", "Initialized");
-
-// RESET SERVO TO 0.0
-
-        IntakeServo.setPosition(0.0);
-
-// TURN ON LED LIGHT ON COLOR SENSOR
-
-        ColorSensor.enableLed(true);
-
-// START CONTROL LOOP
-
-    }
+    Hardware robot = new Hardware();
+//
+//// SET DESCRIPTION FOR EACH MOTOR ON DRIVE TRAIN
+//
+//    private DcMotor LeftDrive = null;
+//    private DcMotor RightDrive = null;
+//
+//    private DcMotor BrushMotor = null;
+//    private DcMotor ArmMotor = null;
+//
+//// SET DESCRIPTION FOR SERVO
+//
+//    private Servo IntakeServo = null;
+//
+//// SET DESCRIPTION FOR DISTANCE SENSOR
+//
+//    private DistanceSensor SensorRange;
+//
+//// SET DESCRIPTION FOR COLOR SENSOR
+//
+//    private ColorSensor ColorSensor;
+//
+//// PROGRAM START POINT
+//
+//    @Override
+//    public void init () {
+//
+//// HARDWARE MAPPING IS USED TO MAP LABELS TO EACH MOTOR AND SERVO
+//
+//        LeftDrive = hardwareMap.get(DcMotor.class,"LeftMotorDrive");
+//        RightDrive = hardwareMap.get(DcMotor.class,"RightMotorDrive");
+//        BrushMotor = hardwareMap.get(DcMotor.class, "BrushMotor");
+//        ArmMotor = hardwareMap.get(DcMotor.class, "ArmMotor");
+//
+//
+//// SERVO
+//
+//        IntakeServo = hardwareMap.servo.get("IntakeServo");
+//
+//// HARDWARE MAP FOR DISTANCE SENSOR
+//
+//        SensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
+//
+//// HARDWARE MAP FOR COLOR SENSOR
+//
+//        ColorSensor = hardwareMap.get(ColorSensor.class, "sensor_color");
+//
+//// SET DIRECTION OF MOTOR DRIVE / SERVO
+//
+//        LeftDrive.setDirection(DcMotor.Direction.FORWARD);
+//        RightDrive.setDirection(DcMotor.Direction.REVERSE);
+//
+//        BrushMotor.setDirection(DcMotor.Direction.FORWARD);
+//
+//        ArmMotor.setDirection(DcMotor.Direction.REVERSE);
+//
+//        IntakeServo.setDirection(Servo.Direction.FORWARD);
+//
+//// SETUP TELEMETRY - SENDING DATA TO DRIVER PHONE
+//
+//        telemetry.addData("Status", "Initialized");
+//
+//// RESET SERVO TO 0.0
+//
+//        IntakeServo.setPosition(0.0);
+//
+//// TURN ON LED LIGHT ON COLOR SENSOR
+//
+//        ColorSensor.enableLed(true);
+//
+//// START CONTROL LOOP
+//
+//    }
+    robot.init(hardwareMap);
 
     @Override
     public void loop () {
@@ -107,23 +110,23 @@ public class RRDrive extends OpMode {
         double lift = gamepad2.left_stick_y;
 
         BrushPower = gamepad2.right_bumper?1:gamepad2.left_bumper?-0.5:0;
-        BrushMotor.setPower(BrushPower);
+        robot.Brush.setPower(BrushPower);
         
         LeftPower = Range.clip(drive - turn, -1.0, 1.0) * damping;
         RightPower = Range.clip(drive + turn, -1.0, 1.0) * damping;
         
         ArmPower = Range.clip(lift, -1.0, 1.0);
 
-        LeftDrive.setPower(LeftPower);
-        RightDrive.setPower(RightPower);
+        robot.LeftDrive.setPower(LeftPower);
+        robot.RightDrive.setPower(RightPower);
 
-        ArmMotor.setPower(ArmPower /2);
+        robot.Arm.setPower(ArmPower /2);
         
 // SEND VALUES TO SERVOS
 
 
-        if (gamepad2.x) IntakeServo.setPosition(0.0);
-        if (gamepad2.y) IntakeServo.setPosition(1.0);
+        if (gamepad2.x) robot.Intake.setPosition(0.0);
+        if (gamepad2.y) robot.Intake.setPosition(1.0);
 
 // SETUP FOR COLOR SENSOR - HSV = HUE SATURATION VALUE MORE ACCURATE THAN USING RGB.
 
