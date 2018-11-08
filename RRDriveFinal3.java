@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
@@ -13,21 +14,22 @@ import java.util.Locale;
 
 // SELECT TELEOP / AUTONOMOUS - FOR NAME ON DRIVER PHONE SELECTION
 
-@TeleOp(name = "RRDrive", group = "Competition")
+@TeleOp(name = "RRDriveFinal3", group = "Competition")
 
-public class RRDrive extends OpMode {
+public class RRDriveFinal3 extends OpMode {
 
 // SET DESCRIPTION FOR EACH MOTOR ON DRIVE TRAIN
 
     private DcMotor LeftDrive = null;
     private DcMotor RightDrive = null;
 
-    private DcMotor BrushMotor = null;
+    private DcMotor BrushMotor1 = null;
     private DcMotor ArmMotor = null;
+//    private DcMotor BrushMotor2 = null; // removed 2nd brush motor from robot
 
 // SET DESCRIPTION FOR SERVO
 
-    private Servo IntakeServo = null;
+    private Servo Servo1 = null;
 
 // SET DESCRIPTION FOR DISTANCE SENSOR
 
@@ -35,113 +37,103 @@ public class RRDrive extends OpMode {
 
 // SET DESCRIPTION FOR COLOR SENSOR
 
-    private ColorSensor ColorSensor;
-
-// FOR ENCODER
-
-    static final double COUNTS_PER_MOTOR_REV = 1120;
-    static final double     DRIVE_GEAR_REDUCTION    = 120.0 / 40.0 ;     // This is < 1.0 if geared UP
-    static final double     COUNTS_PER_DEGREE         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION / 360);
+    private ColorSensor colorSensor;
 
 // PROGRAM START POINT
 
     @Override
     public void init () {
 
-// HARDWARE MAPPING IS USED TO MAP LABELS TO EACH MOTOR
+// HARDWARE MAPPING IS USED TO MAP LABELS TO EACH MOTOR AND SERVO
 
         LeftDrive = hardwareMap.get(DcMotor.class,"LeftMotorDrive");
         RightDrive = hardwareMap.get(DcMotor.class,"RightMotorDrive");
-        BrushMotor = hardwareMap.get(DcMotor.class, "BrushMotor");
+        BrushMotor1 = hardwareMap.get(DcMotor.class, "BrushMotor1");
         ArmMotor = hardwareMap.get(DcMotor.class, "ArmMotor");
+//        BrushMotor2 = hardwareMap.get(DcMotor.class, "BrushMotor2"); // removed 2nd brush motor from robot
 
 // SERVO
 
-        IntakeServo = hardwareMap.servo.get("IntakeServo");
+        Servo1 = hardwareMap.servo.get("Servo1");
 
-// DISTANCE SENSOR
+// HARDWARE MAP FOR DISTANCE SENSOR
 
         SensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
 
-// COLOR SENSOR
+// HARDWARE MAP FOR COLOR SENSOR
 
-        ColorSensor = hardwareMap.get(ColorSensor.class, "sensor_color");
+        colorSensor = hardwareMap.get(ColorSensor.class, "sensor_color");
 
 // SET DIRECTION OF MOTOR DRIVE / SERVO
 
         LeftDrive.setDirection(DcMotor.Direction.FORWARD);
         RightDrive.setDirection(DcMotor.Direction.REVERSE);
 
-        BrushMotor.setDirection(DcMotor.Direction.FORWARD);
-        ArmMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        ArmMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        ArmMotor.setDirection(DcMotor.Direction.REVERSE);
+        BrushMotor1.setDirection(DcMotor.Direction.FORWARD);
+//        BrushMotor2.setDirection(DcMotor.Direction.FORWARD); // removed 2nd brush motor from
+        ArmMotor.setDirection(DcMotor.Direction.FORWARD);
 
-        IntakeServo.setDirection(Servo.Direction.FORWARD);
+        Servo1.setDirection(Servo.Direction.FORWARD);
+
+// SETUP TELEMETRY - SENDING DATA TO DRIVER PHONE
+
+        telemetry.addData("Status", "Initialized");
 
 // RESET SERVO TO 0.0
 
-        IntakeServo.setPosition(0.0);
-
-
+        Servo1.setPosition(0.0);
 
 // TURN ON LED LIGHT ON COLOR SENSOR
 
-        ColorSensor.enableLed(true);
+        colorSensor.enableLed(true);
 
 // START CONTROL LOOP
 
     }
 
-    public void runArm(double angle) {
-        int newPosition;
-
-        newPosition = ArmMotor.getCurrentPosition() + (int) (angle * COUNTS_PER_DEGREE);
-
-        ArmMotor.setTargetPosition(newPosition);
-
-        ArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        ArmMotor.setPower(0);
-
-        ArmMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    }
-
     @Override
     public void loop () {
 
-        double LeftPower;
-        double RightPower;
-        double BrushPower;
-        double ArmPower;
-        
+        double LeftPower = 0;
+        double RightPower = 0;
+        int BrushPower; // Added by Mark
+        double ArmPower = 0;
+
+
 // ON GAME PAD 1 - LEFT STICK CONTROLS FORWARD AND BACK MOTION
 // ON GAME PAD 1 - RIGHT STICK CONTROLS TURNS TO THE LEFT OR RIGHT
-        
+
+
         double drive = gamepad1.left_stick_y;
         double turn  = gamepad1.right_stick_x;
-        double damping = 1 - 0.7 * Math.abs(turn);
-//        double lift = gamepad2.left_stick_y;
+        double damping = 1 - 0.8 * turn;
+        double lift = gamepad2.left_stick_y;
 
-        BrushPower = gamepad2.right_bumper?1:gamepad2.left_bumper?-0.5:0;
-        BrushMotor.setPower(BrushPower);
-        
+        BrushPower = gamepad2.right_bumper?1:gamepad2.left_bumper?-1:0;
+
+        BrushMotor1.setPower(BrushPower); // Added by Mark
+        // BrushMotor2.setPower(BrushPower); // removed 2nd brush motor from robot
+
+        // BrushMotor1 = gamepad2.left_stick_y;
+        // BrushMotor2 = gamepad2.right_stick_y;
+
+        // BrushMotor1 = Range.clip(-1.0, 1.0);
+        // BrushMotor2 = Range.clip(-1.0, 1.0);
+
         LeftPower = Range.clip(drive - turn, -1.0, 1.0) * damping;
         RightPower = Range.clip(drive + turn, -1.0, 1.0) * damping;
-        
-//        ArmPower = Range.clip(lift, -1.0, 1.0);
+        ArmPower = Range.clip(lift, -1.0, 1.0);
 
         LeftDrive.setPower(LeftPower);
         RightDrive.setPower(RightPower);
 
-        if (gamepad2.a) runArm(180);
-        if (gamepad2.b) runArm(-180);
-        
+        ArmMotor.setPower(ArmPower);
+
+
 // SEND VALUES TO SERVOS
 
-
-        if (gamepad2.x) IntakeServo.setPosition(0.0);
-        if (gamepad2.y) IntakeServo.setPosition(1.0);
+        if (gamepad2.left_bumper) Servo1.setPosition(0.5);
+        if (gamepad2.right_bumper) Servo1.setPosition(1.0);
 
 // SETUP FOR COLOR SENSOR - HSV = HUE SATURATION VALUE MORE ACCURATE THAN USING RGB.
 
@@ -150,7 +142,7 @@ public class RRDrive extends OpMode {
 
 // CONVERT RGB VALUES TO HSV VALUES.
 
-        Color.RGBToHSV(ColorSensor.red() * 8, ColorSensor.green() * 8, ColorSensor.blue() * 8, hsvValues);
+        Color.RGBToHSV(colorSensor.red() * 8, colorSensor.green() * 8, colorSensor.blue() * 8, hsvValues);
 
 // TELEMETRY FOR DEBUGGING - WILL SHOW UP ON DRIVERS PHONE
 
@@ -161,8 +153,8 @@ public class RRDrive extends OpMode {
         telemetry.addData("deviceName",SensorRange.getDeviceName() );
         telemetry.addData("range", String.format(Locale.US, "%.01f cm", SensorRange.getDistance(DistanceUnit.CM)));
 
-        telemetry.addData("Clear", ColorSensor.alpha());
-        telemetry.addData("Red  ", ColorSensor.red());
+        telemetry.addData("Clear", colorSensor.alpha());
+        telemetry.addData("Red  ", colorSensor.red());
         telemetry.addData("Hue", hsvValues[0]);
         telemetry.update();
 

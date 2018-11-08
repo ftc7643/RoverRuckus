@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
@@ -13,9 +14,9 @@ import java.util.Locale;
 
 // SELECT TELEOP / AUTONOMOUS - FOR NAME ON DRIVER PHONE SELECTION
 
-@TeleOp(name = "RRDrive", group = "Competition")
+@TeleOp(name = "RRDriveFinal5", group = "Competition")
 
-public class RRDrive extends OpMode {
+public class RRDriveFinal5 extends OpMode {
 
 // SET DESCRIPTION FOR EACH MOTOR ON DRIVE TRAIN
 
@@ -37,33 +38,28 @@ public class RRDrive extends OpMode {
 
     private ColorSensor ColorSensor;
 
-// FOR ENCODER
-
-    static final double COUNTS_PER_MOTOR_REV = 1120;
-    static final double     DRIVE_GEAR_REDUCTION    = 120.0 / 40.0 ;     // This is < 1.0 if geared UP
-    static final double     COUNTS_PER_DEGREE         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION / 360);
-
 // PROGRAM START POINT
 
     @Override
     public void init () {
 
-// HARDWARE MAPPING IS USED TO MAP LABELS TO EACH MOTOR
+// HARDWARE MAPPING IS USED TO MAP LABELS TO EACH MOTOR AND SERVO
 
         LeftDrive = hardwareMap.get(DcMotor.class,"LeftMotorDrive");
         RightDrive = hardwareMap.get(DcMotor.class,"RightMotorDrive");
         BrushMotor = hardwareMap.get(DcMotor.class, "BrushMotor");
         ArmMotor = hardwareMap.get(DcMotor.class, "ArmMotor");
 
+
 // SERVO
 
         IntakeServo = hardwareMap.servo.get("IntakeServo");
 
-// DISTANCE SENSOR
+// HARDWARE MAP FOR DISTANCE SENSOR
 
         SensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
 
-// COLOR SENSOR
+// HARDWARE MAP FOR COLOR SENSOR
 
         ColorSensor = hardwareMap.get(ColorSensor.class, "sensor_color");
 
@@ -73,17 +69,18 @@ public class RRDrive extends OpMode {
         RightDrive.setDirection(DcMotor.Direction.REVERSE);
 
         BrushMotor.setDirection(DcMotor.Direction.FORWARD);
-        ArmMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        ArmMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         ArmMotor.setDirection(DcMotor.Direction.REVERSE);
 
         IntakeServo.setDirection(Servo.Direction.FORWARD);
 
+// SETUP TELEMETRY - SENDING DATA TO DRIVER PHONE
+
+        telemetry.addData("Status", "Initialized");
+
 // RESET SERVO TO 0.0
 
         IntakeServo.setPosition(0.0);
-
-
 
 // TURN ON LED LIGHT ON COLOR SENSOR
 
@@ -93,26 +90,12 @@ public class RRDrive extends OpMode {
 
     }
 
-    public void runArm(double angle) {
-        int newPosition;
-
-        newPosition = ArmMotor.getCurrentPosition() + (int) (angle * COUNTS_PER_DEGREE);
-
-        ArmMotor.setTargetPosition(newPosition);
-
-        ArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        ArmMotor.setPower(0);
-
-        ArmMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    }
-
     @Override
     public void loop () {
 
         double LeftPower;
         double RightPower;
-        double BrushPower;
+        int BrushPower; 
         double ArmPower;
         
 // ON GAME PAD 1 - LEFT STICK CONTROLS FORWARD AND BACK MOTION
@@ -121,21 +104,20 @@ public class RRDrive extends OpMode {
         double drive = gamepad1.left_stick_y;
         double turn  = gamepad1.right_stick_x;
         double damping = 1 - 0.7 * Math.abs(turn);
-//        double lift = gamepad2.left_stick_y;
+        double lift = gamepad2.left_stick_y;
 
-        BrushPower = gamepad2.right_bumper?1:gamepad2.left_bumper?-0.5:0;
+        BrushPower = gamepad2.right_bumper?1:gamepad2.left_bumper?-1:0;
         BrushMotor.setPower(BrushPower);
         
         LeftPower = Range.clip(drive - turn, -1.0, 1.0) * damping;
         RightPower = Range.clip(drive + turn, -1.0, 1.0) * damping;
         
-//        ArmPower = Range.clip(lift, -1.0, 1.0);
+        ArmPower = Range.clip(lift, -1.0, 1.0);
 
         LeftDrive.setPower(LeftPower);
         RightDrive.setPower(RightPower);
 
-        if (gamepad2.a) runArm(180);
-        if (gamepad2.b) runArm(-180);
+        ArmMotor.setPower(ArmPower /2);
         
 // SEND VALUES TO SERVOS
 
